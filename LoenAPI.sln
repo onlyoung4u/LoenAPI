@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{79732529-3801-489C-9B06-4B081C2B27EF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoenAPI", "src\LoenAPI\LoenAPI.csproj", "{A5770F2A-CBBE-4D64-8BC9-E4484B35DD45}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "samples", "samples", "{230DDE57-0760-4410-B59C-C74B34BB550C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoenAPI.Sample", "samples\LoenAPI.Sample\LoenAPI.Sample.csproj", "{3393DAF4-48BA-48A4-B6B0-531ECD844D60}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A5770F2A-CBBE-4D64-8BC9-E4484B35DD45}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A5770F2A-CBBE-4D64-8BC9-E4484B35DD45}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A5770F2A-CBBE-4D64-8BC9-E4484B35DD45}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A5770F2A-CBBE-4D64-8BC9-E4484B35DD45}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3393DAF4-48BA-48A4-B6B0-531ECD844D60}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3393DAF4-48BA-48A4-B6B0-531ECD844D60}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3393DAF4-48BA-48A4-B6B0-531ECD844D60}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3393DAF4-48BA-48A4-B6B0-531ECD844D60}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{A5770F2A-CBBE-4D64-8BC9-E4484B35DD45} = {79732529-3801-489C-9B06-4B081C2B27EF}
+		{3393DAF4-48BA-48A4-B6B0-531ECD844D60} = {230DDE57-0760-4410-B59C-C74B34BB550C}
+	EndGlobalSection
+EndGlobal
