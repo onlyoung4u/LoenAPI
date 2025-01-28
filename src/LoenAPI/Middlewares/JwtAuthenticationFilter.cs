@@ -45,12 +45,12 @@ public class JwtAuthenticationFilter(IJwtService jwtService, string configName =
             }
 
             context.HttpContext.Items["UserId"] = userId;
-
-            return await next(context);
         }
         catch
         {
             return LoenResponseExtensions.Unauthorized();
         }
+
+        return await next(context);
     }
 }

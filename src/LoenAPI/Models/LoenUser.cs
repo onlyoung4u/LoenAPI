@@ -28,7 +28,7 @@ public class LoenUser : LoenBase
     /// <summary>
     /// 最后登录 IP
     /// </summary>
-    [SugarColumn(Length = 15)]
+    [SugarColumn(Length = 39)]
     public string LastLoginIp { get; set; } = string.Empty;
 
     /// <summary>

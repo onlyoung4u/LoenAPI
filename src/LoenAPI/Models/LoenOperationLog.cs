@@ -45,7 +45,7 @@ public class LoenOperationLog : LoenBase
     /// <summary>
     /// 请求 IP
     /// </summary>
-    [SugarColumn(Length = 15)]
+    [SugarColumn(Length = 39)]
     public string Ip { get; set; }
 
     /// <summary>

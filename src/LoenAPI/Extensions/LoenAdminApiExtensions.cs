@@ -28,26 +28,82 @@ public static class LoenAdminApiExtensions
             ) =>
             {
                 var validatedRequest = await validationService.ValidateAsync(request, validator);
-
                 var result = await authService.Login(validatedRequest);
-
                 return LoenResponseExtensions.Success(result);
             }
         );
 
-        var adminGroup = app.MapGroup("/admin").RequireJwtAuth().RequirePermission();
+        var adminGroup = app.MapGroup("/admin")
+            .RequireJwtAuth()
+            .RequirePermission()
+            .RequireOperationLog();
 
         adminGroup.MapGet(
             "/menus",
             async (HttpContext context, IMenuService menuService) =>
             {
                 var userId = context.GetUserId();
-
                 var menus = await menuService.Menus(userId);
-
                 return LoenResponseExtensions.Success(menus);
             }
         );
+
+        adminGroup
+            .MapGet(
+                "/menu",
+                async (IMenuService menuService) =>
+                {
+                    var menus = await menuService.MenuList();
+                    return LoenResponseExtensions.Success(menus);
+                }
+            )
+            .WithName("menu.list");
+
+        adminGroup
+            .MapPost(
+                "/menu",
+                async (
+                    IMenuService menuService,
+                    IValidationService validationService,
+                    IValidator<LoenMenuRequestDto> validator,
+                    LoenMenuRequestDto? menu
+                ) =>
+                {
+                    var validatedMenu = await validationService.ValidateAsync(menu, validator);
+                    await menuService.MenuCreate(validatedMenu);
+                    return LoenResponseExtensions.Success();
+                }
+            )
+            .WithName("menu.create");
+
+        adminGroup
+            .MapPut(
+                "/menu/{id}",
+                async (
+                    IMenuService menuService,
+                    IValidationService validationService,
+                    IValidator<LoenMenuRequestDto> validator,
+                    int id,
+                    LoenMenuRequestDto? menu
+                ) =>
+                {
+                    var validatedMenu = await validationService.ValidateAsync(menu, validator);
+                    await menuService.MenuUpdate(id, validatedMenu);
+                    return LoenResponseExtensions.Success();
+                }
+            )
+            .WithName("menu.update");
+
+        adminGroup
+            .MapDelete(
+                "/menu/{id}",
+                async (IMenuService menuService, int id) =>
+                {
+                    await menuService.MenuDelete(id);
+                    return LoenResponseExtensions.Success();
+                }
+            )
+            .WithName("menu.delete");
 
         return app;
     }
