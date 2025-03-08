@@ -49,6 +49,9 @@ public static class ApplicationBuilderExtensions
         // 添加异常处理中间件
         app.UseExceptionHandling();
 
+        // 添加基于特性的操作日志中间件
+        app.UseAttributeBasedOperationLog();
+
         // 后台 API
         if (needAdminApi)
         {

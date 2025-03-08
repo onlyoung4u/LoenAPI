@@ -3,7 +3,6 @@ using LoenAPI.Middlewares;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
-using SqlSugar;
 
 namespace LoenAPI.Extensions;
 
@@ -50,25 +49,6 @@ public static class RouteGroupBuilderExtensions
                     context.HttpContext.RequestServices.GetRequiredService<PermissionService>();
                 var permissionFilter = new PermissionCheckFilter(permissionService);
                 return await permissionFilter.InvokeAsync(context, next);
-            }
-        );
-
-        return group;
-    }
-
-    /// <summary>
-    /// 添加操作日志
-    /// </summary>
-    /// <param name="group">路由组</param>
-    /// <returns>路由组</returns>
-    public static RouteGroupBuilder RequireOperationLog(this RouteGroupBuilder group)
-    {
-        group.AddEndpointFilter(
-            async (context, next) =>
-            {
-                var db = context.HttpContext.RequestServices.GetRequiredService<ISqlSugarClient>();
-                var filter = new OperationLogFilter(db);
-                return await filter.InvokeAsync(context, next);
             }
         );
 

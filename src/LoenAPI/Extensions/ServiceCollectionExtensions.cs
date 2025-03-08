@@ -23,17 +23,23 @@ public static class ServiceCollectionExtensions
     /// </summary>
     /// <param name="services"></param>
     /// <param name="configuration"></param>
-    /// <param name="dbType"></param>
-    /// <param name="isDevelopment"></param>
     /// <returns></returns>
     public static IServiceCollection AddLoenServices(
         this IServiceCollection services,
-        IConfiguration configuration,
-        DbType dbType,
-        bool isDevelopment = false
+        IConfiguration configuration
     )
     {
-        var databaseConnectionString = configuration.GetConnectionString("DatabaseConnection");
+        var loenAdmin = configuration.GetSection("Loen");
+
+        var isDevelopment = loenAdmin.GetValue<string>("Env") == "dev";
+        var databaseType =
+            loenAdmin.GetValue<string>("DatabaseType")?.ToLower() == "mysql"
+                ? DbType.MySql
+                : DbType.PostgreSQL;
+        var databaseConnection =
+            loenAdmin.GetValue<string>("Database") ?? "DefaultDatabaseConnection";
+
+        var databaseConnectionString = configuration.GetConnectionString(databaseConnection);
         var redisConnectionString =
             configuration.GetConnectionString("RedisConnection") ?? "localhost:6379";
 
@@ -46,13 +52,13 @@ public static class ServiceCollectionExtensions
         services.ConfigureHttpJsonOptions(options =>
         {
             options.SerializerOptions.PropertyNameCaseInsensitive = true;
-            options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
+            // options.SerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower;
             options.SerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
         });
 
         // 基础设施服务
         services.AddSingleton<ISqlSugarClient>(s =>
-            CreateSqlSugarClient(dbType, databaseConnectionString, isDevelopment)
+            CreateSqlSugarClient(databaseType, databaseConnectionString, isDevelopment)
         );
 
         // 缓存服务

@@ -1,4 +1,5 @@
 using FluentValidation;
+using LoenAPI.Attributes;
 using LoenAPI.Dtos;
 using LoenAPI.Services.Interfaces;
 using Microsoft.AspNetCore.Builder;
@@ -19,24 +20,26 @@ public static class LoenAdminApiExtensions
     public static WebApplication UseLoenAdminApi(this WebApplication app)
     {
         app.MapPost(
-            "/admin/login",
-            async (
-                IAuthService authService,
-                IValidationService validationService,
-                IValidator<LoginRequest> validator,
-                LoginRequest? request
-            ) =>
-            {
-                var validatedRequest = await validationService.ValidateAsync(request, validator);
-                var result = await authService.Login(validatedRequest);
-                return LoenResponseExtensions.Success(result);
-            }
-        );
+                "/admin/login",
+                async (
+                    IAuthService authService,
+                    IValidationService validationService,
+                    IValidator<LoginRequest> validator,
+                    LoginRequest? request
+                ) =>
+                {
+                    var validatedRequest = await validationService.ValidateAsync(
+                        request,
+                        validator
+                    );
+                    var result = await authService.Login(validatedRequest);
+                    return LoenResponseExtensions.Success(result);
+                }
+            )
+            .WithName("login")
+            .WithMetadata(new LogOperationAttribute("登录"));
 
-        var adminGroup = app.MapGroup("/admin")
-            .RequireJwtAuth()
-            .RequirePermission()
-            .RequireOperationLog();
+        var adminGroup = app.MapGroup("/admin").RequireJwtAuth().RequirePermission();
 
         adminGroup.MapGet(
             "/menus",
@@ -74,7 +77,8 @@ public static class LoenAdminApiExtensions
                     return LoenResponseExtensions.Success();
                 }
             )
-            .WithName("menu.create");
+            .WithName("menu.create")
+            .WithMetadata(new LogOperationAttribute("创建菜单"));
 
         adminGroup
             .MapPut(
@@ -92,7 +96,8 @@ public static class LoenAdminApiExtensions
                     return LoenResponseExtensions.Success();
                 }
             )
-            .WithName("menu.update");
+            .WithName("menu.update")
+            .WithMetadata(new LogOperationAttribute("修改菜单"));
 
         adminGroup
             .MapDelete(
@@ -103,7 +108,8 @@ public static class LoenAdminApiExtensions
                     return LoenResponseExtensions.Success();
                 }
             )
-            .WithName("menu.delete");
+            .WithName("menu.delete")
+            .WithMetadata(new LogOperationAttribute("删除菜单"));
 
         return app;
     }

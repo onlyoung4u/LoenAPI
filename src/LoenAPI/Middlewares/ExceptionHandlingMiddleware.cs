@@ -43,6 +43,7 @@ public class ExceptionHandlingMiddleware(
     private static async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
         context.Response.ContentType = "application/json";
+        context.Response.Headers.Append("X-Loen-Error", "true");
 
         var response = exception switch
         {

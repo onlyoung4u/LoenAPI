@@ -1,5 +1,4 @@
 using FluentValidation;
-using LoenAPI.Models;
 
 namespace LoenAPI.Dtos;
 
@@ -8,6 +7,8 @@ public class MenuMeta
     public required string Title { get; set; }
     public string? Icon { get; set; }
     public string? Link { get; set; }
+    public bool? HideInMenu { get; set; }
+    public string? ActivePath { get; set; }
 }
 
 public class MenusDto
@@ -37,19 +38,19 @@ public class MenuListDto
 
 public class LoenMenuRequestDto
 {
-    public int? ParentId { get; set; }
-    public string? Title { get; set; }
-    public string? Path { get; set; }
-    public string? Permission { get; set; }
-    public string? Icon { get; set; }
-    public string? Link { get; set; }
-    public int? Sort { get; set; }
-    public bool? Hidden { get; set; }
+    public int ParentId { get; set; }
+    public string Title { get; set; }
+    public string Path { get; set; }
+    public string Permission { get; set; }
+    public string Icon { get; set; }
+    public string Link { get; set; }
+    public int Sort { get; set; }
+    public bool Hidden { get; set; }
 }
 
-public class LoenMenuResponseValidator : AbstractValidator<LoenMenuRequestDto>
+public class LoenMenuRequestValidator : AbstractValidator<LoenMenuRequestDto>
 {
-    public LoenMenuResponseValidator()
+    public LoenMenuRequestValidator()
     {
         RuleFor(x => x.ParentId).NotNull().GreaterThanOrEqualTo(0).WithMessage("未知的父级菜单");
 

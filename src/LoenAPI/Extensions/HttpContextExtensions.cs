@@ -35,7 +35,6 @@ public static class HttpContextExtensions
 
         if (!string.IsNullOrEmpty(forwardedFor))
         {
-            // X-Forwarded-For 可能包含多个 IP，第一个是客户端真实 IP
             return forwardedFor.Split(',')[0].Trim();
         }
 

@@ -58,4 +58,10 @@ public class LoenOperationLog : LoenBase
     /// 是否成功
     /// </summary>
     public bool Success { get; set; }
+
+    /// <summary>
+    /// 操作描述
+    /// </summary>
+    [SugarColumn(Length = 255, IsNullable = true)]
+    public string? Description { get; set; }
 }

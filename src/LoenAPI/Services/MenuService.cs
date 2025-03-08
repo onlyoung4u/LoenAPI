@@ -94,7 +94,35 @@ public class MenuService(ISqlSugarClient db, PermissionService permissionService
             }
         }
 
-        return HandleMenuTree(menus);
+        var mainMenu = new MenusDto
+        {
+            Name = "index",
+            Path = "/index",
+            Component = "BasicLayout",
+            Meta = new MenuMeta { Title = "首页", Icon = "lucide:layout-dashboard" },
+            Redirect = "/dashboard",
+            Children =
+            [
+                new MenusDto
+                {
+                    Name = "dashboard",
+                    Path = "/dashboard",
+                    Component = "/dashboard/workspace/index",
+                    Meta = new MenuMeta
+                    {
+                        Title = "首页",
+                        HideInMenu = true,
+                        ActivePath = "/index",
+                    },
+                },
+            ],
+        };
+
+        var tree = HandleMenuTree(menus);
+
+        tree.Insert(0, mainMenu);
+
+        return tree;
     }
 
     private static List<MenuListDto> HandleMenuList(List<LoenMenu> menus, int parentId = 0)
