@@ -61,10 +61,6 @@ public class AttributeBasedOperationLogMiddleware(
         // 获取路由名称
         var routeName = endpoint.Metadata.GetMetadata<EndpointNameMetadata>()?.EndpointName;
 
-        // 获取用户信息
-        var userId = context.GetUserId();
-        var (username, nickname) = await GetUserInfoAsync(userId);
-
         // 确保请求体可以被多次读取
         context.Request.EnableBuffering();
 
@@ -83,9 +79,6 @@ public class AttributeBasedOperationLogMiddleware(
 
         var log = new LoenOperationLog
         {
-            UserId = userId,
-            Username = username,
-            Nickname = nickname,
             Path = context.Request.GetDisplayUrl(),
             Route = routeName ?? string.Empty,
             Method = context.Request.Method,
@@ -115,6 +108,14 @@ public class AttributeBasedOperationLogMiddleware(
         }
         finally
         {
+            // 获取用户信息
+            var userId = context.GetUserId();
+            var (username, nickname) = await GetUserInfoAsync(userId);
+
+            log.UserId = userId;
+            log.Username = username;
+            log.Nickname = nickname;
+
             try
             {
                 await _db.Insertable(log).ExecuteCommandAsync();
