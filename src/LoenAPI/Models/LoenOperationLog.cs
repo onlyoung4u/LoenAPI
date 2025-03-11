@@ -62,6 +62,6 @@ public class LoenOperationLog : LoenBase
     /// <summary>
     /// 操作描述
     /// </summary>
-    [SugarColumn(Length = 255, IsNullable = true)]
-    public string? Description { get; set; }
+    [SugarColumn(Length = 255)]
+    public string Description { get; set; }
 }

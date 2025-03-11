@@ -41,6 +41,19 @@ public static class LoenAdminApiExtensions
 
         var adminGroup = app.MapGroup("/admin").RequireJwtAuth().RequirePermission();
 
+        adminGroup
+            .MapPost(
+                "/logout",
+                async (HttpContext context, IAuthService authService) =>
+                {
+                    var result = await authService.Logout(context.GetToken());
+
+                    return LoenResponseExtensions.SuccessOrError(result);
+                }
+            )
+            .WithName("logout")
+            .WithMetadata(new LogOperationAttribute("登出"));
+
         adminGroup.MapGet(
             "/menus",
             async (HttpContext context, IMenuService menuService) =>
@@ -50,6 +63,48 @@ public static class LoenAdminApiExtensions
                 return LoenResponseExtensions.Success(menus);
             }
         );
+
+        adminGroup.MapGet(
+            "/permissions",
+            async (HttpContext context, IAuthService authService) =>
+            {
+                var userId = context.GetUserId();
+                var permissions = await authService.GetPermissions(userId);
+                return LoenResponseExtensions.Success(permissions);
+            }
+        );
+
+        adminGroup.MapGet(
+            "/user/info",
+            async (HttpContext context, IAuthService authService) =>
+            {
+                var userId = context.GetUserId();
+                var userInfo = await authService.GetUserInfo(userId);
+                return LoenResponseExtensions.Success(userInfo);
+            }
+        );
+
+        adminGroup
+            .MapPost(
+                "/change-password",
+                async (
+                    HttpContext context,
+                    IAuthService authService,
+                    IValidationService validationService,
+                    IValidator<ChangePasswordRequest> validator,
+                    ChangePasswordRequest? request
+                ) =>
+                {
+                    var validatedRequest = await validationService.ValidateAsync(
+                        request,
+                        validator
+                    );
+                    await authService.ChangePassword(validatedRequest, context.GetUserId());
+                    return LoenResponseExtensions.Success();
+                }
+            )
+            .WithName("change-password")
+            .WithMetadata(new LogOperationAttribute("修改密码"));
 
         adminGroup
             .MapGet(
@@ -82,7 +137,7 @@ public static class LoenAdminApiExtensions
 
         adminGroup
             .MapPut(
-                "/menu/{id}",
+                "/menu/{id:int:min(1)}",
                 async (
                     IMenuService menuService,
                     IValidationService validationService,
@@ -101,7 +156,7 @@ public static class LoenAdminApiExtensions
 
         adminGroup
             .MapDelete(
-                "/menu/{id}",
+                "/menu/{id:int:min(1)}",
                 async (IMenuService menuService, int id) =>
                 {
                     await menuService.MenuDelete(id);
@@ -110,6 +165,20 @@ public static class LoenAdminApiExtensions
             )
             .WithName("menu.delete")
             .WithMetadata(new LogOperationAttribute("删除菜单"));
+
+        adminGroup
+            .MapGet(
+                "/logs",
+                async (HttpContext context, ILogService logService) =>
+                {
+                    var paginationResponse = await logService.GetLogs(
+                        context.GetPaginationRequest()
+                    );
+
+                    return LoenResponseExtensions.Success(paginationResponse);
+                }
+            )
+            .WithName("logs");
 
         return app;
     }

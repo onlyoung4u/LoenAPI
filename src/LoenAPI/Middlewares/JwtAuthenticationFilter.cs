@@ -25,10 +25,7 @@ public class JwtAuthenticationFilter(IJwtService jwtService, string configName =
         EndpointFilterDelegate next
     )
     {
-        var token = context
-            .HttpContext.Request.Headers.Authorization.FirstOrDefault()
-            ?.Split(" ")
-            .Last();
+        var token = context.HttpContext.GetToken();
 
         if (string.IsNullOrEmpty(token))
         {

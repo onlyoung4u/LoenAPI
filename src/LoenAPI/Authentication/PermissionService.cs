@@ -70,23 +70,32 @@ public class PermissionService(CacheService cacheService, ISqlSugarClient db)
 
         var permissions = new List<string>();
 
-        var roloIds = await _db.Queryable<LoenUserRole>()
-            .Where(ur => ur.UserId == userId)
-            .Select(ur => ur.RoleId)
-            .ToListAsync();
-
-        if (roloIds.Count == 0)
+        if (userId == 1)
         {
-            await _cacheService.SetMemoryAsync(cacheKey, permissions);
-
-            return permissions;
+            permissions = await _db.Queryable<LoenMenu>()
+                .Select(menu => menu.Permission)
+                .ToListAsync();
         }
+        else
+        {
+            var roloIds = await _db.Queryable<LoenUserRole>()
+                .Where(ur => ur.UserId == userId)
+                .Select(ur => ur.RoleId)
+                .ToListAsync();
 
-        permissions = await _db.Queryable<LoenRolePermission>()
-            .Where(rp => roloIds.Contains(rp.RoleId))
-            .Distinct()
-            .Select(rp => rp.Permission)
-            .ToListAsync();
+            if (roloIds.Count == 0)
+            {
+                await _cacheService.SetMemoryAsync(cacheKey, permissions);
+
+                return permissions;
+            }
+
+            permissions = await _db.Queryable<LoenRolePermission>()
+                .Where(rp => roloIds.Contains(rp.RoleId))
+                .Distinct()
+                .Select(rp => rp.Permission)
+                .ToListAsync();
+        }
 
         await _cacheService.SetMemoryAsync(cacheKey, permissions);
 

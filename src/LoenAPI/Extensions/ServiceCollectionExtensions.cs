@@ -61,6 +61,9 @@ public static class ServiceCollectionExtensions
             CreateSqlSugarClient(databaseType, databaseConnectionString, isDevelopment)
         );
 
+        // 添加跨域服务
+        services.AddLoenCors(configuration);
+
         // 缓存服务
         services.AddMemoryCache();
         services.AddRedisCache(redisConnectionString);
@@ -80,6 +83,7 @@ public static class ServiceCollectionExtensions
         // 业务相关服务
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IMenuService, MenuService>();
+        services.AddScoped<ILogService, LogService>();
 
         return services;
     }
@@ -131,6 +135,45 @@ public static class ServiceCollectionExtensions
         services.AddSingleton<MemoryCacheProvider>();
         services.AddSingleton<RedisCacheProvider>();
         services.AddSingleton<CacheService>();
+
+        return services;
+    }
+
+    /// <summary>
+    /// 添加Loen跨域服务
+    /// </summary>
+    /// <param name="services"></param>
+    /// <param name="configuration"></param>
+    /// <returns></returns>
+    private static IServiceCollection AddLoenCors(
+        this IServiceCollection services,
+        IConfiguration configuration
+    )
+    {
+        var corsOptions = configuration.GetSection("Cors");
+        var origins = corsOptions.GetSection("AllowedOrigins").Get<string[]>() ?? [];
+
+        services.AddCors(options =>
+        {
+            options.AddPolicy(
+                "LoenCorsPolicy",
+                policy =>
+                {
+                    if (origins.Length > 0)
+                    {
+                        policy
+                            .WithOrigins(origins)
+                            .AllowAnyHeader()
+                            .AllowAnyMethod()
+                            .AllowCredentials();
+                    }
+                    else
+                    {
+                        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                    }
+                }
+            );
+        });
 
         return services;
     }

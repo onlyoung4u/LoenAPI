@@ -11,10 +11,15 @@ namespace LoenAPI.Services;
 /// <summary>
 /// 认证服务
 /// </summary>
-public class AuthService(IJwtService jwtService, ISqlSugarClient sqlSugarClient) : IAuthService
+public class AuthService(
+    IJwtService jwtService,
+    ISqlSugarClient sqlSugarClient,
+    PermissionService permissionService
+) : IAuthService
 {
     private readonly IJwtService _jwtService = jwtService;
     private readonly ISqlSugarClient _sqlSugarClient = sqlSugarClient;
+    private readonly PermissionService _permissionService = permissionService;
 
     /// <summary>
     /// 登录
@@ -55,5 +60,72 @@ public class AuthService(IJwtService jwtService, ISqlSugarClient sqlSugarClient)
         {
             throw new LoenException("登录失败");
         }
+    }
+
+    /// <summary>
+    /// 登出
+    /// </summary>
+    /// <param name="token"></param>
+    /// <returns></returns>
+    public async Task<bool> Logout(string token)
+    {
+        var result = await _jwtService.BanToken(token);
+
+        return result;
+    }
+
+    /// <summary>
+    /// 获取权限
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    public async Task<List<string>> GetPermissions(int userId)
+    {
+        return await _permissionService.GetUserPermissionAsync(userId);
+    }
+
+    /// <summary>
+    /// 获取用户信息
+    /// </summary>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    public async Task<UserInfo> GetUserInfo(int userId)
+    {
+        var user = await _sqlSugarClient
+            .Queryable<LoenUser>()
+            .Includes(x => x.Roles)
+            .InSingleAsync(userId);
+
+        var roles = userId == 1 ? ["超级管理员"] : user.Roles.Select(x => x.Name).ToList();
+
+        return new UserInfo
+        {
+            Id = user.Id,
+            Username = user.Username,
+            Nickname = user.Nickname,
+            Roles = roles,
+        };
+    }
+
+    /// <summary>
+    /// 修改密码
+    /// </summary>
+    /// <param name="request"></param>
+    /// <param name="userId"></param>
+    /// <returns></returns>
+    public async Task ChangePassword(ChangePasswordRequest request, int userId)
+    {
+        var user = await _sqlSugarClient.Queryable<LoenUser>().InSingleAsync(userId);
+
+        if (!BcryptUtil.VerifyPassword(request.OldPassword, user.Password))
+        {
+            throw new LoenException("旧密码错误");
+        }
+
+        await _sqlSugarClient
+            .Updateable<LoenUser>()
+            .SetColumns(x => x.Password == BcryptUtil.HashPassword(request.NewPassword))
+            .Where(x => x.Id == userId)
+            .ExecuteCommandAsync();
     }
 }

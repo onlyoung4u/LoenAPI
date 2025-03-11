@@ -46,6 +46,9 @@ public static class ApplicationBuilderExtensions
             DatabaseSeeder.Initialize(db);
         }
 
+        // 使用跨域中间件
+        app.UseCors("LoenCorsPolicy");
+
         // 添加异常处理中间件
         app.UseExceptionHandling();
 

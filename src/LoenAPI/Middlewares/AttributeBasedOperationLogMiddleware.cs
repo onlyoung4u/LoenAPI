@@ -142,7 +142,7 @@ public class AttributeBasedOperationLogMiddleware(
         }
 
         // 缓存未命中，从数据库查询
-        var user = await _db.Queryable<LoenUser>().Where(x => x.Id == userId).FirstAsync();
+        var user = await _db.Queryable<LoenUser>().InSingleAsync(userId);
 
         if (user == null)
         {

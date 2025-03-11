@@ -50,6 +50,16 @@ public static class LoenResponseExtensions
     }
 
     /// <summary>
+    /// 成功或错误
+    /// </summary>
+    /// <param name="success"></param>
+    /// <param name="message"></param>
+    /// <returns></returns>
+    public static IResult SuccessOrError(bool success, string? message = null)
+    {
+        return success ? Success() : Error(message);
+    }
+
     /// 错误
     /// </summary>
     /// <param name="code"></param>
