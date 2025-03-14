@@ -172,7 +172,8 @@ public static class LoenAdminApiExtensions
                 async (HttpContext context, ILogService logService) =>
                 {
                     var paginationResponse = await logService.GetLogs(
-                        context.GetPaginationRequest()
+                        context.GetPaginationRequest(),
+                        context.GetQueryParams<LogRequest>()
                     );
 
                     return LoenResponseExtensions.Success(paginationResponse);
