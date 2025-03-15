@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Linq.Expressions;
 using System.Reflection;
 using LoenAPI.Dtos;
 using Microsoft.AspNetCore.Http;
@@ -11,6 +12,8 @@ namespace LoenAPI.Extensions;
 public static class HttpContextExtensions
 {
     private static readonly ConcurrentDictionary<Type, PropertyInfo[]> PropertyCache = new();
+
+    private static readonly ConcurrentDictionary<string, Delegate> PropertySetterCache = new();
 
     /// <summary>
     /// 获取用户ID
@@ -183,70 +186,122 @@ public static class HttpContextExtensions
         where T : class, new()
     {
         var result = new T();
+        var type = typeof(T);
 
-        var properties = PropertyCache.GetOrAdd(typeof(T), t => t.GetProperties());
+        // 使用缓存获取属性信息
+        var properties = PropertyCache.GetOrAdd(type, t => t.GetProperties());
 
         foreach (var property in properties)
         {
-            // 获取属性类型
-            var propertyType = property.PropertyType;
+            var propertyName = property.Name;
 
+            // 如果查询参数中不存在该属性名，则跳过
             if (
-                context.Request.Query.TryGetValue(property.Name, out var value)
-                && !string.IsNullOrEmpty(value)
+                !context.Request.Query.TryGetValue(propertyName, out var value)
+                || string.IsNullOrEmpty(value)
             )
             {
-                // 处理可空类型
-                if (
-                    propertyType.IsGenericType
-                    && propertyType.GetGenericTypeDefinition() == typeof(Nullable<>)
+                continue;
+            }
+
+            // 获取属性类型
+            var propertyType = property.PropertyType;
+            var underlyingType = Nullable.GetUnderlyingType(propertyType) ?? propertyType;
+
+            // 尝试转换并设置属性值
+            object? convertedValue = null;
+
+            try
+            {
+                // 根据类型进行转换
+                if (underlyingType == typeof(string))
+                {
+                    convertedValue = value.ToString();
+                }
+                else if (underlyingType == typeof(int) && int.TryParse(value, out var intValue))
+                {
+                    convertedValue = intValue;
+                }
+                else if (
+                    underlyingType == typeof(DateTime)
+                    && DateTime.TryParse(value, out var dateTimeValue)
                 )
                 {
-                    propertyType = Nullable.GetUnderlyingType(propertyType);
+                    convertedValue = dateTimeValue;
+                }
+                else if (underlyingType == typeof(bool) && bool.TryParse(value, out var boolValue))
+                {
+                    convertedValue = boolValue;
+                }
+                else if (
+                    underlyingType == typeof(double)
+                    && double.TryParse(value, out var doubleValue)
+                )
+                {
+                    convertedValue = doubleValue;
+                }
+                else if (
+                    underlyingType == typeof(decimal)
+                    && decimal.TryParse(value, out var decimalValue)
+                )
+                {
+                    convertedValue = decimalValue;
                 }
 
-                if (propertyType == typeof(string))
+                // 如果成功转换了值，则设置属性
+                if (convertedValue != null)
                 {
-                    property.SetValue(result, value);
-                }
-                else if (propertyType == typeof(int))
-                {
-                    if (int.TryParse(value, out var intValue))
+                    // 使用缓存的委托设置属性值
+                    var setterKey = $"{type.FullName}.{propertyName}";
+                    var setter = PropertySetterCache.GetOrAdd(
+                        setterKey,
+                        _ => CreateSetter<T>(property)
+                    );
+
+                    if (setter is Action<T, object> typedSetter)
                     {
-                        property.SetValue(result, intValue);
+                        typedSetter(result, convertedValue);
                     }
                 }
-                else if (propertyType == typeof(DateTime))
-                {
-                    if (DateTime.TryParse(value, out var dateTimeValue))
-                    {
-                        property.SetValue(result, dateTimeValue);
-                    }
-                }
-                else if (propertyType == typeof(bool))
-                {
-                    if (bool.TryParse(value, out var boolValue))
-                    {
-                        property.SetValue(result, boolValue);
-                    }
-                }
-                else if (propertyType == typeof(double))
-                {
-                    if (double.TryParse(value, out var doubleValue))
-                    {
-                        property.SetValue(result, doubleValue);
-                    }
-                }
-                else if (propertyType == typeof(decimal))
-                {
-                    if (decimal.TryParse(value, out var decimalValue))
-                    {
-                        property.SetValue(result, decimalValue);
-                    }
-                }
+            }
+            catch
+            {
+                // 忽略转换异常，继续处理下一个属性
             }
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// 创建属性设置器委托
+    /// </summary>
+    /// <typeparam name="T">目标类型</typeparam>
+    /// <param name="property">属性信息</param>
+    /// <returns>设置属性值的委托</returns>
+    private static Delegate CreateSetter<T>(PropertyInfo property)
+    {
+        // 创建表达式树参数: (T instance, object value)
+        var instanceParam = Expression.Parameter(typeof(T), "instance");
+        var valueParam = Expression.Parameter(typeof(object), "value");
+
+        // 创建属性访问表达式: instance.Property
+        var propertyAccess = Expression.Property(instanceParam, property);
+
+        // 创建值转换表达式: (PropertyType)value
+        var convertedValue = Expression.Convert(valueParam, property.PropertyType);
+
+        // 创建赋值表达式: instance.Property = (PropertyType)value
+        var assignExpression = Expression.Assign(propertyAccess, convertedValue);
+
+        // 创建 lambda 表达式: (T instance, object value) => instance.Property = (PropertyType)value
+        var lambda = Expression.Lambda<Action<T, object>>(
+            assignExpression,
+            instanceParam,
+            valueParam
+        );
+
+        // 编译表达式树为委托
+        return lambda.Compile();
     }
 }
